@@ -1,0 +1,26 @@
+.login-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10rem;
+
+  &__players-img-container {
+    display: grid;
+    grid-template-columns: repeat(6, 15rem);
+    grid-template-rows: 20rem 20rem;
+    gap: 2rem;
+  }
+
+  &__player-img {
+    object-fit: contain;
+    width: 15rem;
+    height: 20rem;
+    border: 0.1rem solid black;
+  }
+
+  &__inputs-container {
+    display: flex;
+    flex-direction: column;
+    gap: 5rem;
+  }
+}

@@ -1,7 +1,16 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  selectedImage: "",
+  user: [
+    {
+      userId: "",
+      userName: "",
+      userImage: "",
+      userMoney: 4000,
+      userHp: 100,
+      userGold: 0,
+    },
+  ],
 };
 
 export const gameSlice = createSlice({
@@ -9,11 +18,11 @@ export const gameSlice = createSlice({
   initialState,
 
   reducers: {
-    updateSelectedImage: (state, action) => {
-      state.selectedImage = action.payload;
+    updateUser: (state, action) => {
+      state.user = action.payload;
     },
   },
 });
 
-export const { updateSelectedImage } = gameSlice.actions;
+export const { updateUser } = gameSlice.actions;
 export default gameSlice.reducer;

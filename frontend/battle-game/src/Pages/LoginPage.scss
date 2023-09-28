@@ -16,11 +16,17 @@
     width: 15rem;
     height: 20rem;
     border: 0.1rem solid black;
+    cursor: pointer;
   }
 
   &__inputs-container {
     display: flex;
     flex-direction: column;
     gap: 5rem;
+  }
+
+  &__selected {
+    border: 0.3rem solid red;
+   
   }
 }

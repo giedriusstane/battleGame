@@ -1,6 +1,6 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import "./LoginPage.scss";
-import { io } from "socket.io-client";
+import { useNavigate } from "react-router-dom";
 
 const selectableImages = [
   "https://i.pinimg.com/1200x/b6/d3/80/b6d380323769a6a6815197c5a0d5b636.jpg",
@@ -17,21 +17,50 @@ const selectableImages = [
   "https://i.pinimg.com/564x/65/32/fb/6532fba67c37b029167848dd41c96556.jpg",
 ];
 
-const socket = io.connect("http://localhost:3000");
-
-const LoginPage = () => {
+const LoginPage = ({ socket }) => {
   const inputUserNameRef = useRef();
-  const 
+  const [selectedImageIndex, setSelectedImageIndex] = useState(-1);
+  const [noneSelectableImage, setNoneSelectableImage] = useState([]);
+
+  const navigateTo = useNavigate();
+
+  // socket.on("connect", () => {
+  //   console.log("Connected to server");
+  // });
+
+  useEffect(() => {
+    socket.on("selected_images", (data) => {
+      setNoneSelectableImage(data);
+      console.log(noneSelectableImage);
+    });
+  }, [socket]);
+
+  useEffect(() => {
+    console.log(noneSelectableImage);
+  }, [noneSelectableImage]);
 
   const generatePlayerImage = () => {
     const imgArray = [];
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < selectableImages.length; i++) {
+      const isImageSelectable =
+        noneSelectableImage.indexOf(selectableImages[i]) === -1;
+
       imgArray.push(
         <img
-          className="login-page__player-img"
+          className={`login-page__player-img ${
+            selectedImageIndex === i ? "login-page__selected" : ""
+          } ${isImageSelectable ? "" : "non-selectable"}`}
           key={i}
           src={selectableImages[i]}
           alt=""
+          onClick={() => handleImageClick(i)}
+          // Disable the click event if the image is non-selectable
+          style={{
+            pointerEvents: isImageSelectable ? "auto" : "none",
+            filter: isImageSelectable
+              ? "none"
+              : "grayscale(85%) blur(0.1rem) opacity(0.5)",
+          }}
         />
       );
     }
@@ -39,14 +68,38 @@ const LoginPage = () => {
     return imgArray;
   };
 
-  const sendUserData = () => {
-    socket.emit("user_data", {
-      userName: inputUserNameRef.current.value,
-      userImage:
-        "https://i.pinimg.com/474x/5a/ea/33/5aea33c98558aa1eb89af256be5974c5.jpg",
-    });
+  const handleImageClick = (index) => {
+    setSelectedImageIndex(index);
+  };
 
-    inputUserNameRef.current.value = "";
+  const sendUserData = () => {
+    let errorMessage = null;
+
+    if (selectedImageIndex === -1) {
+      errorMessage = "Please select player image!";
+    } else if (inputUserNameRef.current.value.length === 0) {
+      errorMessage = "Please enter username!";
+    }
+
+    if (errorMessage) {
+      alert(errorMessage);
+    } else {
+      if (
+        selectedImageIndex >= 0 &&
+        selectedImageIndex < selectableImages.length
+      ) {
+        socket.emit("user_data", {
+          userName: inputUserNameRef.current.value,
+          userImage: selectableImages[selectedImageIndex],
+        });
+
+        inputUserNameRef.current.value = "";
+
+        navigateTo("/items");
+      } else {
+        alert("Invalid selected image!");
+      }
+    }
   };
 
   return (

@@ -1,0 +1,21 @@
+.lobby-page {
+  &__top-container {
+    display: flex;
+    justify-content: space-between;
+    font-size: 2rem;
+    padding: 5rem;
+  }
+
+  &__generate-items-box {
+    display: flex;
+    flex-direction: column;
+    border: 0.1rem solid black;
+   
+  }
+
+  &__items-container {
+    display: flex;
+    padding: 5rem;
+    gap: 5rem;
+  }
+}

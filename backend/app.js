@@ -262,18 +262,105 @@ const io = new Server(server, {
 
 io.on("connection", (socket) => {
 
-    // Emit the 'selectedImages' array to all clients
     io.emit("selected_images", selectedImages);
 
-    socket.on("generate_btn_data", (data) => {
-        if (data.generate === true) {
+    socket.on("generate_btn_data", () => {
+        const userData = allUsersData.find((userData) => userData.userId === socket.id);
+
+        if (userData) {
+            userData.userMoney -= 100;
+
             let weapon = generateWeapon();
             let armour = generateArmour();
-            let potion = generatePotion()
-            console.log(weapon, armour);
-            io.emit("generated_weapon_data", { weapon, armour, potion });
+            let potion = generatePotion();
+
+            io.emit("btn_data_generated", { weapon, armour, potion, money: userData.userMoney });
         }
+
+    });
+
+
+    socket.on("on_take_btn_data", (data) => {
+        const userData = allUsersData.find((userData) => userData.userId === socket.id);
+
+
+        if (userData) {
+            userData.weaponsInSlot.push(data.weapon);
+            let inventoryData = userData.weaponsInSlot;
+            console.log(inventoryData);
+
+            io.emit("inventory_items_data", inventoryData);
+        }
+    });
+
+
+
+    socket.on("unequip_btn_data", () => {
+        const userData = allUsersData.find((userData) => userData.userId === socket.id);
+
+        if (userData) {
+
+            let weapon = {
+                level: "C",
+                weaponImg: "https://m.media-amazon.com/images/I/61Y-85Ei4-L._AC_UF894,1000_QL80_.jpg",
+                maxDmg: 1,
+                maxEffect: 0,
+                gold: 1,
+                effectsSlot: []
+            };
+
+
+            userData.equipedWeapon = weapon;
+
+            let equipedWeapon = userData.equipedWeapon;
+            io.emit("equipedWeapon_data", { weapon: equipedWeapon });
+        }
+
+    });
+
+
+    socket.on("on_inventory_item_btn_data", (data) => {
+        const userData = allUsersData.find((userData) => userData.userId === socket.id);
+
+        if (userData) {
+
+            userData.equipedWeapon = data;
+            let equipedWeapon = userData.equipedWeapon;
+            io.emit("equipedWeapon_data", equipedWeapon);
+        }
+
+    });
+
+
+
+    socket.on("default_equipment", () => {
+
+        const userData = allUsersData.find((userData) => userData.userId === socket.id);
+
+        if (userData) {
+
+            let weapon = {
+                level: "C",
+                weaponImg: "https://m.media-amazon.com/images/I/61Y-85Ei4-L._AC_UF894,1000_QL80_.jpg",
+                maxDmg: 1,
+                maxEffect: 0,
+                gold: 1,
+                effectsSlot: []
+            };
+
+
+            userData.equipedWeapon = weapon;
+
+            let equipedWeapon = userData.equipedWeapon;
+            io.emit("default_equipment", { weapon: equipedWeapon });
+        }
+
+
+
     })
+
+
+
 
     socket.on("user_data", (data) => {
 
@@ -284,6 +371,8 @@ io.on("connection", (socket) => {
             userMoney: 4000,
             userHp: 100,
             userGold: 0,
+            weaponsInSlot: [],
+            equipedWeapon: {}
         };
 
         allUsersData.push(user);
@@ -291,7 +380,6 @@ io.on("connection", (socket) => {
 
 
 
-        // Find the matching user by userId
         const userData = allUsersData.find((userData) => userData.userId === socket.id);
 
         // Emit the specific user's data

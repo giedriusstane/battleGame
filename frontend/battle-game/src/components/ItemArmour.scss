@@ -1,7 +1,8 @@
-.item {
+.item-armour {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  position: relative;
 
   &__bg-image {
     background-position: center;
@@ -42,5 +43,26 @@
     font-size: 2rem;
     text-align: center;
     padding: 1rem;
+  }
+
+  &__modal {
+    position: absolute;
+    border: 0.1rem solid black;
+    height: 15rem;
+    width: 10rem;
+    background-color: rgb(214, 214, 214);
+    top: -3rem;
+    right: 4rem;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &__img:hover {
+    .item-armour__modal {
+      opacity: 1;
+      pointer-events: all;
+      transition-duration: 0.5s;
+      transition-timing-function: ease-in-out;
+    }
   }
 }

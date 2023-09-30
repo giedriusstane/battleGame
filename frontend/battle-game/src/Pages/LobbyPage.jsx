@@ -75,6 +75,12 @@ const LobbyPage = ({ socket }) => {
     socket.emit("unequip_btn_data", {});
   };
 
+  const onInventoryItemDelete = (item) => {
+    socket.emit("on_inventory_item_btn_delete_data", {
+      weapon: item,
+    });
+  };
+
   return (
     <div className="lobby-page">
       <div className="lobby-page__top-container">
@@ -128,6 +134,7 @@ const LobbyPage = ({ socket }) => {
                 gold={item.gold}
                 effects={item.effectsSlot}
                 onInventoryItemClick={onInventoryItemClick}
+                onInventoryItemDelete={onInventoryItemDelete}
               />
             ))
           ) : (

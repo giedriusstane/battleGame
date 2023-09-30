@@ -11,6 +11,7 @@ const InventoryItemWeapon = ({
   effects,
   onInventoryItemClick,
   item,
+  onInventoryItemDelete,
 }) => {
   let bgImageClassName = "inventory-item-weapon__img";
 
@@ -30,9 +31,16 @@ const InventoryItemWeapon = ({
     }
   };
 
+  const handleInventoryItemDelete = () => {
+    if (onInventoryItemDelete) {
+      onInventoryItemDelete(item);
+    }
+  };
+
   return (
     <div className="inventory-item-weapon">
       <FontAwesomeIcon
+        onClick={handleInventoryItemDelete}
         className="inventory-item-weapon__btn-delete"
         icon={faXmark}
       />

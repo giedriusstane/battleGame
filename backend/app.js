@@ -7,6 +7,17 @@ import { Server } from "socket.io";
 
 
 let allUsersData = [];
+
+let weapon = {
+    level: "C",
+    weaponImg: "https://m.media-amazon.com/images/I/61Y-85Ei4-L._AC_UF894,1000_QL80_.jpg",
+    maxDmg: 1,
+    maxEffect: 0,
+    gold: 1,
+    effectsSlot: [],
+    slotId: "idWeapon123456789"
+};
+
 let selectedImages = [];
 let weaponsImages = [
     "https://kombat-instruments-limited-2.myshopify.com/cdn/shop/products/Kris_Sword__04895_large.webp?v=1678826069",
@@ -41,6 +52,8 @@ const generateWeapon = () => {
     let weaponObj = {};
     let levels = ["A", "B", "C"];
     let level = Math.floor(Math.random() * 3);
+
+
 
     if (level === 0) {
 
@@ -83,7 +96,7 @@ const generateWeapon = () => {
             maxEffect: maxEffectsSlots,
             gold: maxGoldGenerated,
             weaponImg: weaponsImages[Math.floor(Math.random() * 10)],
-            effectsSlot: slot
+            effectsSlot: slot,
 
 
         }
@@ -129,7 +142,8 @@ const generateWeapon = () => {
             maxEffect: maxEffectsSlots,
             gold: maxGoldGenerated,
             weaponImg: weaponsImages[Math.floor(Math.random() * 10)],
-            effectsSlot: slot
+            effectsSlot: slot,
+
 
 
 
@@ -149,7 +163,8 @@ const generateWeapon = () => {
             maxEffect: 0,
             gold: maxGoldGenerated,
             weaponImg: weaponsImages[Math.floor(Math.random() * 10)],
-            effectsSlot: []
+            effectsSlot: [],
+
 
         }
     }
@@ -267,12 +282,21 @@ io.on("connection", (socket) => {
     socket.on("generate_btn_data", () => {
         const userData = allUsersData.find((userData) => userData.userId === socket.id);
 
-        if (userData) {
+        if (userData && userData.userMoney >= 100) {
             userData.userMoney -= 100;
 
             let weapon = generateWeapon();
             let armour = generateArmour();
             let potion = generatePotion();
+
+            userData.generatedWeapon = generateWeapon();
+            userData.generatedArmour = generateArmour();
+            userData.generatedPotion = generatePotion();
+
+            if (userData.weaponTaken === true) {
+                userData.generatedWeapon.weaponImg = "";
+            }
+
 
             io.emit("btn_data_generated", { weapon, armour, potion, money: userData.userMoney });
         }
@@ -284,12 +308,30 @@ io.on("connection", (socket) => {
         const userData = allUsersData.find((userData) => userData.userId === socket.id);
 
 
-        if (userData) {
+        if (userData && userData.numberOfSlots <= 9 && userData.generatedWeapon !== "") {
+
+
+            let slotId = `idWeapon${Math.random()}${Math.floor(Math.random() * 1000)}`;
+            data.weapon.slotId = slotId;
             userData.weaponsInSlot.push(data.weapon);
+            userData.weaponTaken = true;
             let inventoryData = userData.weaponsInSlot;
-            console.log(inventoryData);
+            userData.numberOfSlots += 1;
+            userData.generatedWeapon = "";
 
             io.emit("inventory_items_data", inventoryData);
+
+
+            if (userData.weaponTaken === true) {
+                userData.generatedWeapon.weaponImg = "";
+                io.emit("btn_data_generated", { weapon });
+            }
+
+
+
+
+
+
         }
     });
 
@@ -299,15 +341,6 @@ io.on("connection", (socket) => {
         const userData = allUsersData.find((userData) => userData.userId === socket.id);
 
         if (userData) {
-
-            let weapon = {
-                level: "C",
-                weaponImg: "https://m.media-amazon.com/images/I/61Y-85Ei4-L._AC_UF894,1000_QL80_.jpg",
-                maxDmg: 1,
-                maxEffect: 0,
-                gold: 1,
-                effectsSlot: []
-            };
 
 
             userData.equipedWeapon = weapon;
@@ -339,14 +372,6 @@ io.on("connection", (socket) => {
 
         if (userData) {
 
-            let weapon = {
-                level: "C",
-                weaponImg: "https://m.media-amazon.com/images/I/61Y-85Ei4-L._AC_UF894,1000_QL80_.jpg",
-                maxDmg: 1,
-                maxEffect: 0,
-                gold: 1,
-                effectsSlot: []
-            };
 
 
             userData.equipedWeapon = weapon;
@@ -358,6 +383,29 @@ io.on("connection", (socket) => {
 
 
     })
+
+    socket.on("on_inventory_item_btn_delete_data", (data) => {
+        const userData = allUsersData.find((userData) => userData.userId === socket.id);
+
+        if (userData) {
+            userData.weaponsInSlot = userData.weaponsInSlot.filter((weaponSlot) => weaponSlot.slotId !== data.weapon.slotId);
+
+            let inventoryData = userData.weaponsInSlot;
+            userData.numberOfSlots -= 1;
+
+            io.emit("inventory_items_data", inventoryData);
+
+
+            if (userData.equipedWeapon && userData.equipedWeapon.weapon) {
+                if (userData.equipedWeapon.weapon.slotId === data.weapon.slotId) {
+                    userData.equipedWeapon = weapon;
+                    let equipedWeapon = userData.equipedWeapon;
+                    io.emit("default_equipment", { weapon: equipedWeapon });
+                }
+            }
+        }
+    });
+
 
 
 
@@ -372,7 +420,12 @@ io.on("connection", (socket) => {
             userHp: 100,
             userGold: 0,
             weaponsInSlot: [],
-            equipedWeapon: {}
+            equipedWeapon: {},
+            numberOfSlots: 0,
+            generatedWeapon: "",
+            generatedArmour: "",
+            generatedPotion: "",
+            weaponTaken: false,
         };
 
         allUsersData.push(user);

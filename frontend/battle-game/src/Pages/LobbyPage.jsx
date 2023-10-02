@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import ItemWeapon from "../components/ItemWeapon";
 import ItemArmour from "../components/ItemArmour";
 import ItemPotion from "../components/ItemPotion";
@@ -7,29 +9,37 @@ import InventoryItemArmour from "../components/InventoryItemArmour";
 import InventoryItemPotion from "../components/InventoryItemPotion";
 import EquipmentSlotWeapon from "../components/EquipmentSlotWeapon";
 import EquipmentSlotArmour from "../components/EquipmentSlotArmour";
+import EquipmentSlotPotion from "../components/EquipmentSlotPotion";
 import OnlinePlayerCard from "../components/OnlinePlayerCard";
+import ReqCard from "../components/ReqCard";
 import "./LobbyPage.scss";
 
 const LobbyPage = ({ socket }) => {
+  const navigateTo = useNavigate();
   const [money, setMoney] = useState();
   const [userName, setUserName] = useState("");
   const [userImage, setUserImage] = useState();
   const [generatedWeapon, setGeneratedWeapon] = useState({});
   const [generatedArmour, setGeneratedArmour] = useState({});
-  const [potionHp, setPotionHp] = useState(0);
+  const [generatePotion, setGeneratePotion] = useState();
   const [inventoryData, setInventoryData] = useState();
   const [inventoryArmourData, setInventoryArmourData] = useState();
+  const [inventoryPotionData, setinventoryPotionData] = useState();
   const [equipedWeapon, setequipedWeapon] = useState();
   const [equipedArmour, setequipedArmour] = useState();
+  const [equipedPotion, setequipedPotion] = useState();
   const [needToGenerate, setNeedToGenerate] = useState("");
   const [needToGenerateArmour, setNeedToGenerateArmour] = useState("");
-  const [connectedUsers, setConnectedUsers] = useState();
+  const [needToGeneratePotion, setNeedToGeneratePotion] = useState("");
+  const [connectedUsers, setConnectedUsers] = useState([]);
+  const [userRequest, setUserRequest] = useState();
 
   useEffect(() => {
     socket.on("user_data", (data) => {
       setMoney(data.userMoney);
       setUserName(data.userName);
       setUserImage(data.userImage);
+
       console.log(data);
     });
   }, []);
@@ -62,10 +72,18 @@ const LobbyPage = ({ socket }) => {
   }, []);
 
   useEffect(() => {
+    socket.emit("default_potion_equipment");
+    socket.on("default_potion_equipment", (data) => {
+      setequipedPotion(data);
+      console.log(data);
+    });
+  }, []);
+
+  useEffect(() => {
     socket.on("btn_data_generated", (data) => {
       setGeneratedWeapon(data.weapon);
       setGeneratedArmour(data.armour);
-      setPotionHp(data.potion);
+      setGeneratePotion(data.potion);
       setMoney(data.money);
       console.log(data);
     });
@@ -83,10 +101,15 @@ const LobbyPage = ({ socket }) => {
     });
   };
 
+  const onTakePotion = () => {
+    socket.emit("on_take_potion_btn_data", {
+      potion: generatePotion,
+    });
+  };
+
   useEffect(() => {
     socket.on("inventory_items_data", (data) => {
       setInventoryData(data);
-      console.log("inventory data");
       console.log(data);
     });
   }, [socket]);
@@ -94,7 +117,13 @@ const LobbyPage = ({ socket }) => {
   useEffect(() => {
     socket.on("inventory_armour_items_data", (data) => {
       setInventoryArmourData(data);
-      console.log("inventory data armour");
+      console.log(data);
+    });
+  }, [socket]);
+
+  useEffect(() => {
+    socket.on("inventory_potion_items_data", (data) => {
+      setinventoryPotionData(data);
       console.log(data);
     });
   }, [socket]);
@@ -108,6 +137,12 @@ const LobbyPage = ({ socket }) => {
   const onInventoryArmourItemClick = (item) => {
     socket.emit("on_inventory_armour_item_btn_data", {
       armour: item,
+    });
+  };
+
+  const onInventoryPotionItemClick = (item) => {
+    socket.emit("on_inventory_potion_item_btn_data", {
+      potion: item,
     });
   };
 
@@ -125,12 +160,23 @@ const LobbyPage = ({ socket }) => {
     });
   }, [socket]);
 
+  useEffect(() => {
+    socket.on("equipedPotion_data", (data) => {
+      setequipedPotion(data);
+      console.log(data);
+    });
+  }, [socket]);
+
   const handleUnequipBtn = () => {
     socket.emit("unequip_btn_data", {});
   };
 
   const handleUnequipArmourBtn = () => {
     socket.emit("unequip_armour_btn_data", {});
+  };
+
+  const handleUnequipPotionBtn = () => {
+    socket.emit("unequip_potion_btn_data", {});
   };
 
   const onInventoryItemDelete = (item) => {
@@ -142,6 +188,12 @@ const LobbyPage = ({ socket }) => {
   const onInventoryArmourItemDelete = (item) => {
     socket.emit("on_inventory_armour_item_btn_delete_data", {
       armour: item,
+    });
+  };
+
+  const onInventoryPotionItemDelete = (item) => {
+    socket.emit("on_inventory_potion_item_btn_delete_data", {
+      potion: item,
     });
   };
 
@@ -159,8 +211,30 @@ const LobbyPage = ({ socket }) => {
     });
   }, [socket]);
 
+  useEffect(() => {
+    socket.on("need_to_generate_potion", (data) => {
+      setNeedToGeneratePotion(data.msg);
+      console.log(data);
+    });
+  }, [socket]);
+
+  const onSendReq = (user) => () => {
+    socket.emit("on_send_req_btn_data", connectedUsers[user].userId);
+  };
+
+  useEffect(() => {
+    socket.on("battle-req", (data) => {
+      setUserRequest(data);
+      console.log(data);
+    });
+  }, [socket]);
+
   return (
     <div className="lobby-page">
+      {userRequest && (
+        <ReqCard onAcceptBtn={onAcceptBtn} user={userRequest.userName} />
+      )}
+      <div></div>
       <div className="lobby-page__top-container">
         <div>Money: ${money}</div>
         <div className="lobby-page__logout-container">
@@ -204,9 +278,12 @@ const LobbyPage = ({ socket }) => {
 
                 <ItemPotion
                   image={
-                    "https://preview.redd.it/mega-thread-on-how-to-make-truly-incredible-potions-with-v0-6t46k37psqy91.png?width=512&format=png&auto=webp&s=11e884456dcb137d3fcb3e95b17635ac1e765861"
+                    needToGeneratePotion !== "click to generate!"
+                      ? "https://preview.redd.it/mega-thread-on-how-to-make-truly-incredible-potions-with-v0-6t46k37psqy91.png?width=512&format=png&auto=webp&s=11e884456dcb137d3fcb3e95b17635ac1e765861"
+                      : undefined
                   }
-                  potion={potionHp}
+                  potion={generatePotion ? generatePotion.hp : undefined}
+                  onTakePotion={onTakePotion}
                 />
               </div>
               <button onClick={handleGenerateBtn}>Generate</button>
@@ -249,7 +326,10 @@ const LobbyPage = ({ socket }) => {
                   <InventoryItemPotion
                     item={inventoryPotionData[index]}
                     key={index}
-                    image={item.armourImg}
+                    potion={item.hp}
+                    image={
+                      "https://preview.redd.it/mega-thread-on-how-to-make-truly-incredible-potions-with-v0-6t46k37psqy91.png?width=512&format=png&auto=webp&s=11e884456dcb137d3fcb3e95b17635ac1e765861"
+                    }
                     onInventoryPotionItemClick={onInventoryPotionItemClick}
                     onInventoryPotionItemDelete={onInventoryPotionItemDelete}
                   />
@@ -277,17 +357,28 @@ const LobbyPage = ({ socket }) => {
                   handleUnequipArmourBtn={handleUnequipArmourBtn}
                 />
               )}
+
+              {equipedPotion && (
+                <EquipmentSlotPotion
+                  potion={equipedPotion.hp}
+                  image={
+                    "https://preview.redd.it/mega-thread-on-how-to-make-truly-incredible-potions-with-v0-6t46k37psqy91.png?width=512&format=png&auto=webp&s=11e884456dcb137d3fcb3e95b17635ac1e765861"
+                  }
+                  handleUnequipPotionBtn={handleUnequipPotionBtn}
+                />
+              )}
             </div>
           </div>
         </div>
 
         <div className="lobby-page__right-box">
-          {connectedUsers &&
+          {Array.isArray(connectedUsers) &&
             connectedUsers.map((user, index) => (
               <OnlinePlayerCard
                 key={index}
                 image={user.userImage}
                 userName={user.userName}
+                onSendReq={onSendReq(index)}
               />
             ))}
         </div>

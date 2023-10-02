@@ -33,7 +33,7 @@ const InventoryItemPotion = ({
         <div className="inventory-item-potion__modal">
           <p>Hp: {potion}</p>
         </div>
-        <img src={image} alt="" />
+        <img className="inventory-item-potion__img" src={image} alt="" />
       </div>
       <button
         onClick={handleInventoryPotionItemClick}

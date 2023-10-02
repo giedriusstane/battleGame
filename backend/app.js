@@ -27,6 +27,14 @@ let armour = {
     slotId: "idArmour123456789"
 };
 
+
+let potion = {
+
+    hp: 0,
+    potionImg: "https://media.istockphoto.com/id/183755457/photo/cross-bandaid.jpg?s=612x612&w=0&k=20&c=oQx63PKi0kzSY8YzKiDrY-oETN1txXoSfhMqvGdSAFc=",
+    slotId: "idPotion123456789"
+};
+
 let selectedImages = [];
 let weaponsImages = [
     "https://kombat-instruments-limited-2.myshopify.com/cdn/shop/products/Kris_Sword__04895_large.webp?v=1678826069",
@@ -259,12 +267,28 @@ const generateArmour = () => {
 
 };
 
-
 const generatePotion = () => {
 
-    let potion = 0;
-    return potion = Math.floor(Math.random() * 101) + 1;
-}
+    let potionObj = {};
+
+
+    return potionObj = {
+        hp: Math.floor(Math.random() * 101) + 1,
+        potionImg: "https://preview.redd.it/mega-thread-on-how-to-make-truly-incredible-potions-with-v0-6t46k37psqy91.png?width=512&format=png&auto=webp&s=11e884456dcb137d3fcb3e95b17635ac1e765861"
+
+
+
+    }
+
+
+
+
+
+};
+
+
+
+
 
 
 
@@ -306,9 +330,11 @@ io.on("connection", (socket) => {
 
             userData.weaponTaken = false;
             userData.armourTaken = false;
+            userData.potionTaken = false;
 
             io.to(socket.id).emit("need_to_generate", { msg: "" });
             io.to(socket.id).emit("need_to_generate_armour", { msg: "" });
+            io.to(socket.id).emit("need_to_generate_potion", { msg: "" });
 
 
             io.to(socket.id).emit("btn_data_generated", { weapon, armour, potion, money: userData.userMoney });
@@ -331,7 +357,7 @@ io.on("connection", (socket) => {
 
 
 
-            let inventoryData = userData.itemsInSlot.filter((item) => !item.slotId.startsWith("idArmour"));
+            let inventoryData = userData.itemsInSlot.filter((item) => !item.slotId.startsWith("idArmour") && !item.slotId.startsWith("idPotion"));
             userData.numberOfSlots += 1;
 
 
@@ -368,7 +394,7 @@ io.on("connection", (socket) => {
 
 
 
-            let inventoryData = userData.itemsInSlot.filter((item) => !item.slotId.startsWith("idWeapon"));
+            let inventoryData = userData.itemsInSlot.filter((item) => !item.slotId.startsWith("idWeapon") && !item.slotId.startsWith("idPotion"));
             userData.numberOfSlots += 1;
 
 
@@ -386,6 +412,33 @@ io.on("connection", (socket) => {
 
         }
     });
+
+
+
+
+    socket.on("on_take_potion_btn_data", (data) => {
+        const userData = allUsersData.find((userData) => userData.userId === socket.id);
+
+        if (userData && userData.numberOfSlots <= 9 && userData.potionTaken === false) {
+            let slotId = `idPotion${Math.random()}${Math.floor(Math.random() * 1000)}`;
+            data.potion.slotId = slotId;
+            userData.itemsInSlot.push(data.potion);
+            userData.potionTaken = true;
+
+            let inventoryData = userData.itemsInSlot.filter((item) => !item.slotId.startsWith("idWeapon") && !item.slotId.startsWith("idArmour"));
+            userData.numberOfSlots += 1;
+
+            io.to(socket.id).emit("inventory_potion_items_data", inventoryData);
+
+            if (userData.potionTaken === true) {
+                io.to(socket.id).emit("need_to_generate_potion", { msg: "click to generate!" });
+            }
+        }
+    });
+
+
+
+
 
 
 
@@ -420,6 +473,21 @@ io.on("connection", (socket) => {
     });
 
 
+    socket.on("unequip_potion_btn_data", () => {
+        const userData = allUsersData.find((userData) => userData.userId === socket.id);
+
+        if (userData) {
+
+
+            userData.equipedPotion = potion;
+
+            let equipedPotion = userData.equipedPotion;
+            io.to(socket.id).emit("equipedPotion_data", { potion: equipedPotion });
+        }
+
+    });
+
+
     socket.on("on_inventory_item_btn_data", (data) => {
         const userData = allUsersData.find((userData) => userData.userId === socket.id);
 
@@ -445,6 +513,21 @@ io.on("connection", (socket) => {
         }
 
     });
+
+
+
+    socket.on("on_inventory_potion_item_btn_data", (data) => {
+        const userData = allUsersData.find((userData) => userData.userId === socket.id);
+
+        if (userData) {
+
+            userData.equipedPotion = data;
+            let equipedPotion = userData.equipedPotion;
+            io.to(socket.id).emit("equipedPotion_data", equipedPotion);
+        }
+
+    });
+
 
 
 
@@ -482,6 +565,25 @@ io.on("connection", (socket) => {
 
     })
 
+
+
+    socket.on("default_potion_equipment", () => {
+
+        const userData = allUsersData.find((userData) => userData.userId === socket.id);
+
+        if (userData) {
+
+
+            userData.equipedPotion = potion;
+
+            let equipedPotion = userData.equipedPotion;
+            io.to(socket.id).emit("default_potion_equipment", { potion: equipedPotion });
+        }
+
+
+
+    })
+
     socket.on("on_inventory_item_btn_delete_data", (data) => {
         const userData = allUsersData.find((userData) => userData.userId === socket.id);
 
@@ -489,7 +591,7 @@ io.on("connection", (socket) => {
             userData.itemsInSlot = userData.itemsInSlot.filter((itemSlot) => itemSlot.slotId !== data.weapon.slotId);
 
 
-            let inventoryData = userData.itemsInSlot.filter((item) => !item.slotId.startsWith("idArmour"));
+            let inventoryData = userData.itemsInSlot.filter((item) => !item.slotId.startsWith("idArmour") && !item.slotId.startsWith("idPotion"));
             userData.numberOfSlots -= 1;
 
 
@@ -516,7 +618,7 @@ io.on("connection", (socket) => {
             userData.itemsInSlot = userData.itemsInSlot.filter((itemSlot) => itemSlot.slotId !== data.armour.slotId);
 
 
-            let inventoryData = userData.itemsInSlot.filter((item) => !item.slotId.startsWith("idWeapon"));
+            let inventoryData = userData.itemsInSlot.filter((item) => !item.slotId.startsWith("idWeapon") && !item.slotId.startsWith("idPotion"));
             userData.numberOfSlots -= 1;
 
 
@@ -538,6 +640,37 @@ io.on("connection", (socket) => {
 
 
 
+    socket.on("on_inventory_potion_item_btn_delete_data", (data) => {
+        const userData = allUsersData.find((userData) => userData.userId === socket.id);
+
+        if (userData) {
+            userData.itemsInSlot = userData.itemsInSlot.filter((itemSlot) => itemSlot.slotId !== data.potion.slotId);
+
+
+            let inventoryData = userData.itemsInSlot.filter((item) => !item.slotId.startsWith("idWeapon") && !item.slotId.startsWith("idArmour"));
+            userData.numberOfSlots -= 1;
+
+
+
+
+            io.to(socket.id).emit("inventory_potion_items_data", inventoryData);
+
+
+            if (userData.equipedPotion && userData.equipedPotion.potion) {
+                if (userData.equipedPotion.potion.slotId === data.potion.slotId) {
+                    userData.equipedPotion = potion;
+                    let equipedPotion = userData.equipedPotion;
+                    io.to(socket.id).emit("default_potion_equipment", { potion: equipedPotion });
+                }
+            }
+        }
+    });
+
+
+
+
+
+
 
     socket.on("user_data", (data) => {
 
@@ -551,9 +684,11 @@ io.on("connection", (socket) => {
             itemsInSlot: [],
             equipedWeapon: {},
             equipedArmour: {},
+            equipedPotion: {},
             numberOfSlots: 0,
             weaponTaken: true,
             armourTaken: true,
+            potionTaken: true,
         };
 
         allUsersData.push(user);
@@ -578,6 +713,16 @@ io.on("connection", (socket) => {
 
 
     });
+
+
+    socket.on("on_send_req_btn_data", (data) => {
+        const userData = allUsersData.find((userData) => userData.userId === socket.id);
+
+        console.log(userData);
+        io.to(data).emit("battle-req", userData)
+
+    });
+
 
 
 

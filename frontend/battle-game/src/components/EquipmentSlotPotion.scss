@@ -1,0 +1,45 @@
+.equipment-slot-potion {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: relative;
+
+  &__img {
+    background-image: url("https://preview.redd.it/mega-thread-on-how-to-make-truly-incredible-potions-with-v0-6t46k37psqy91.png?width=512&format=png&auto=webp&s=11e884456dcb137d3fcb3e95b17635ac1e765861");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 6rem;
+    width: 10rem;
+    height: 7rem;
+    border: 0.1rem solid black;
+  }
+
+  &__btn-unequip {
+    width: 100%;
+    height: 2.5rem;
+    background-color: rgb(219, 173, 173);
+    border: none;
+    cursor: pointer;
+  }
+
+  &__modal {
+    position: absolute;
+    border: 0.1rem solid black;
+    height: 15rem;
+    width: 10rem;
+    background-color: rgb(214, 214, 214);
+    top: -3rem;
+    right: 4rem;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &__img:hover {
+    .equipment-slot-potion__modal {
+      opacity: 1;
+      pointer-events: all;
+      transition-duration: 0.5s;
+      transition-timing-function: ease-in-out;
+    }
+  }
+}

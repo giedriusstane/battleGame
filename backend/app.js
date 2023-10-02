@@ -18,6 +18,15 @@ let weapon = {
     slotId: "idWeapon123456789"
 };
 
+let armour = {
+    level: "C",
+    armourImg: "https://www.3wisemen.co.nz/media/catalog/product/t/2/t20_1022117_1.jpg?optimize=low&bg-color=255,255,255&fit=bounds&height=700&width=700&canvas=700:700",
+    maxArmour: 1,
+    maxEffect: 0,
+    effectsSlot: [],
+    slotId: "idArmour123456789"
+};
+
 let selectedImages = [];
 let weaponsImages = [
     "https://kombat-instruments-limited-2.myshopify.com/cdn/shop/products/Kris_Sword__04895_large.webp?v=1678826069",
@@ -277,7 +286,9 @@ const io = new Server(server, {
 
 io.on("connection", (socket) => {
 
-    io.emit("selected_images", selectedImages);
+    io.to(socket.id).emit("selected_images", selectedImages);
+
+
 
     socket.on("generate_btn_data", () => {
         const userData = allUsersData.find((userData) => userData.userId === socket.id);
@@ -293,12 +304,14 @@ io.on("connection", (socket) => {
             userData.generatedArmour = generateArmour();
             userData.generatedPotion = generatePotion();
 
-            if (userData.weaponTaken === true) {
-                userData.generatedWeapon.weaponImg = "";
-            }
+            userData.weaponTaken = false;
+            userData.armourTaken = false;
+
+            io.to(socket.id).emit("need_to_generate", { msg: "" });
+            io.to(socket.id).emit("need_to_generate_armour", { msg: "" });
 
 
-            io.emit("btn_data_generated", { weapon, armour, potion, money: userData.userMoney });
+            io.to(socket.id).emit("btn_data_generated", { weapon, armour, potion, money: userData.userMoney });
         }
 
     });
@@ -308,32 +321,72 @@ io.on("connection", (socket) => {
         const userData = allUsersData.find((userData) => userData.userId === socket.id);
 
 
-        if (userData && userData.numberOfSlots <= 9 && userData.generatedWeapon !== "") {
+        if (userData && userData.numberOfSlots <= 9 && userData.weaponTaken === false) {
 
 
             let slotId = `idWeapon${Math.random()}${Math.floor(Math.random() * 1000)}`;
             data.weapon.slotId = slotId;
-            userData.weaponsInSlot.push(data.weapon);
+            userData.itemsInSlot.push(data.weapon);
             userData.weaponTaken = true;
-            let inventoryData = userData.weaponsInSlot;
+
+
+
+            let inventoryData = userData.itemsInSlot.filter((item) => !item.slotId.startsWith("idArmour"));
             userData.numberOfSlots += 1;
-            userData.generatedWeapon = "";
 
-            io.emit("inventory_items_data", inventoryData);
 
+
+            io.to(socket.id).emit("inventory_items_data", inventoryData);
+
+
+            userData.weaponTaken = true;
 
             if (userData.weaponTaken === true) {
-                userData.generatedWeapon.weaponImg = "";
-                io.emit("btn_data_generated", { weapon });
+
+                io.to(socket.id).emit("need_to_generate", { msg: "click to generate!" });
             }
-
-
 
 
 
 
         }
     });
+
+
+
+    socket.on("on_take_armour_btn_data", (data) => {
+        const userData = allUsersData.find((userData) => userData.userId === socket.id);
+
+
+        if (userData && userData.numberOfSlots <= 9 && userData.armourTaken === false) {
+
+
+            let slotId = `idArmour${Math.random()}${Math.floor(Math.random() * 1000)}`;
+            data.armour.slotId = slotId;
+            userData.itemsInSlot.push(data.armour);
+            userData.armourTaken = true;
+
+
+
+            let inventoryData = userData.itemsInSlot.filter((item) => !item.slotId.startsWith("idWeapon"));
+            userData.numberOfSlots += 1;
+
+
+            io.to(socket.id).emit("inventory_armour_items_data", inventoryData);
+
+            userData.armourTaken = true;
+
+            if (userData.armourTaken === true) {
+
+                io.to(socket.id).emit("need_to_generate_armour", { msg: "click to generate!" });
+            }
+
+
+
+
+        }
+    });
+
 
 
 
@@ -346,7 +399,22 @@ io.on("connection", (socket) => {
             userData.equipedWeapon = weapon;
 
             let equipedWeapon = userData.equipedWeapon;
-            io.emit("equipedWeapon_data", { weapon: equipedWeapon });
+            io.to(socket.id).emit("equipedWeapon_data", { weapon: equipedWeapon });
+        }
+
+    });
+
+
+    socket.on("unequip_armour_btn_data", () => {
+        const userData = allUsersData.find((userData) => userData.userId === socket.id);
+
+        if (userData) {
+
+
+            userData.equipedArmour = armour;
+
+            let equipedArmour = userData.equipedArmour;
+            io.to(socket.id).emit("equipedArmour_data", { armour: equipedArmour });
         }
 
     });
@@ -359,7 +427,21 @@ io.on("connection", (socket) => {
 
             userData.equipedWeapon = data;
             let equipedWeapon = userData.equipedWeapon;
-            io.emit("equipedWeapon_data", equipedWeapon);
+            io.to(socket.id).emit("equipedWeapon_data", equipedWeapon);
+        }
+
+    });
+
+
+
+    socket.on("on_inventory_armour_item_btn_data", (data) => {
+        const userData = allUsersData.find((userData) => userData.userId === socket.id);
+
+        if (userData) {
+
+            userData.equipedArmour = data;
+            let equipedArmour = userData.equipedArmour;
+            io.to(socket.id).emit("equipedArmour_data", equipedArmour);
         }
 
     });
@@ -372,12 +454,28 @@ io.on("connection", (socket) => {
 
         if (userData) {
 
-
-
             userData.equipedWeapon = weapon;
 
             let equipedWeapon = userData.equipedWeapon;
-            io.emit("default_equipment", { weapon: equipedWeapon });
+            io.to(socket.id).emit("default_equipment", { weapon: equipedWeapon });
+        }
+
+
+    });
+
+
+
+    socket.on("default_armour_equipment", () => {
+
+        const userData = allUsersData.find((userData) => userData.userId === socket.id);
+
+        if (userData) {
+
+
+            userData.equipedArmour = armour;
+
+            let equipedArmour = userData.equipedArmour;
+            io.to(socket.id).emit("default_armour_equipment", { armour: equipedArmour });
         }
 
 
@@ -388,19 +486,50 @@ io.on("connection", (socket) => {
         const userData = allUsersData.find((userData) => userData.userId === socket.id);
 
         if (userData) {
-            userData.weaponsInSlot = userData.weaponsInSlot.filter((weaponSlot) => weaponSlot.slotId !== data.weapon.slotId);
+            userData.itemsInSlot = userData.itemsInSlot.filter((itemSlot) => itemSlot.slotId !== data.weapon.slotId);
 
-            let inventoryData = userData.weaponsInSlot;
+
+            let inventoryData = userData.itemsInSlot.filter((item) => !item.slotId.startsWith("idArmour"));
             userData.numberOfSlots -= 1;
 
-            io.emit("inventory_items_data", inventoryData);
+
+            io.to(socket.id).emit("inventory_items_data", inventoryData);
 
 
             if (userData.equipedWeapon && userData.equipedWeapon.weapon) {
                 if (userData.equipedWeapon.weapon.slotId === data.weapon.slotId) {
                     userData.equipedWeapon = weapon;
                     let equipedWeapon = userData.equipedWeapon;
-                    io.emit("default_equipment", { weapon: equipedWeapon });
+                    io.to(socket.id).emit("default_equipment", { weapon: equipedWeapon });
+                }
+            }
+        }
+    });
+
+
+
+
+    socket.on("on_inventory_armour_item_btn_delete_data", (data) => {
+        const userData = allUsersData.find((userData) => userData.userId === socket.id);
+
+        if (userData) {
+            userData.itemsInSlot = userData.itemsInSlot.filter((itemSlot) => itemSlot.slotId !== data.armour.slotId);
+
+
+            let inventoryData = userData.itemsInSlot.filter((item) => !item.slotId.startsWith("idWeapon"));
+            userData.numberOfSlots -= 1;
+
+
+
+
+            io.to(socket.id).emit("inventory_armour_items_data", inventoryData);
+
+
+            if (userData.equipedArmour && userData.equipedArmour.armour) {
+                if (userData.equipedArmour.armour.slotId === data.armour.slotId) {
+                    userData.equipedArmour = armour;
+                    let equipedArmour = userData.equipedArmour;
+                    io.to(socket.id).emit("default_armour_equipment", { armour: equipedArmour });
                 }
             }
         }
@@ -419,13 +548,12 @@ io.on("connection", (socket) => {
             userMoney: 4000,
             userHp: 100,
             userGold: 0,
-            weaponsInSlot: [],
+            itemsInSlot: [],
             equipedWeapon: {},
+            equipedArmour: {},
             numberOfSlots: 0,
-            generatedWeapon: "",
-            generatedArmour: "",
-            generatedPotion: "",
-            weaponTaken: false,
+            weaponTaken: true,
+            armourTaken: true,
         };
 
         allUsersData.push(user);
@@ -435,13 +563,27 @@ io.on("connection", (socket) => {
 
         const userData = allUsersData.find((userData) => userData.userId === socket.id);
 
-        // Emit the specific user's data
+
         if (userData) {
             io.to(socket.id).emit("user_data", userData);
+
+
+            // const connectedUsers = allUsersData.filter((connectedUser) => connectedUser.userId !== socket.id);
+
+
+            socket.emit("connected_users", allUsersData);
+            socket.broadcast.emit("connected_users", allUsersData);
+
         }
 
 
     });
+
+
+
+
+
+
 
 
 });

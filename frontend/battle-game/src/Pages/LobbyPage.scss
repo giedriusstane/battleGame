@@ -1,7 +1,12 @@
 .lobby-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
   &__top-container {
     display: flex;
     justify-content: space-between;
+    min-width: 90rem;
     font-size: 2rem;
     padding: 5rem;
   }
@@ -65,5 +70,32 @@
     display: flex;
     justify-content: center;
     width: 60rem;
+  }
+
+  &__left-right-boxes-container {
+    display: flex;
+    gap: 5rem;
+  }
+
+  &__right-box {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    border: 0.1rem solid rgb(0, 0, 0);
+    padding: 5rem;
+    height: 94.5rem;
+    width: 30rem;
+    overflow-y: auto;
+  }
+
+  &__logout-container {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__user-img {
+    height: 5rem;
+    border-radius: 100%;
+    object-fit: contain;
   }
 }

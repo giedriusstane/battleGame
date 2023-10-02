@@ -1,29 +1,29 @@
 import React from "react";
-import "./ItemArmour.scss";
+import "./EquipmentSlotArmour.scss";
 
-const ItemArmour = ({ image, level, armour, effects, onTakeArmour }) => {
-  let bgImageClassName = "item-armour__bg-image";
+const EquipmentSlotArmour = ({
+  image,
+  level,
+  armour,
+  effects,
+  handleUnequipArmourBtn,
+}) => {
+  let bgImageClassName = "equipment-slot-armour__img";
 
   if (level === "A") {
-    bgImageClassName += " item-armour__bg-image-level-A";
+    bgImageClassName += " equipment-slot-armour__bg-image-level-A";
   } else if (level === "B") {
-    bgImageClassName += " item-armour__bg-image-level-B";
+    bgImageClassName += " equipment-slot-armour__bg-image-level-B";
   } else if (level === "C") {
-    bgImageClassName += " item-armour__bg-image-level-C";
+    bgImageClassName += " equipment-slot-armour__bg-image-level-C";
   }
 
   effects = effects || [];
 
-  const handleTakeArmourButtonClick = () => {
-    if (onTakeArmour) {
-      onTakeArmour();
-    }
-  };
-
   return (
-    <div className="item-armour">
-      <div className="item-armour__img">
-        <div className="item-armour__modal">
+    <div className="equipment-slot-armour">
+      <div className="equipment-slot-armour__img">
+        <div className="equipment-slot-armour__modal">
           <p>Level: {level}</p>
           <p>Max armour: {armour}</p>
           {effects.length > 0 ? (
@@ -39,23 +39,20 @@ const ItemArmour = ({ image, level, armour, effects, onTakeArmour }) => {
             <p>Effects: 0</p>
           )}
         </div>
-        {image ? (
+        {image && (
           <div
             className={bgImageClassName}
             style={{ backgroundImage: `url(${image})` }}
           ></div>
-        ) : (
-          <p className="item-armour__generating">Click Generate Button!</p>
         )}
       </div>
       <button
-        onClick={handleTakeArmourButtonClick}
-        className="item-weapon__btn-take"
+        onClick={handleUnequipArmourBtn}
+        className="equipment-slot-armour__btn-unequip"
       >
-        Take
+        Unequip
       </button>
     </div>
   );
 };
-
-export default ItemArmour;
+export default EquipmentSlotArmour;

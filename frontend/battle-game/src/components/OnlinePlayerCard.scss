@@ -1,0 +1,21 @@
+.online-player-card {
+  display: flex;
+  gap: 2rem;
+  border: 0.1rem solid black;
+  padding: 1rem;
+ 
+
+  &__user-img {
+    border: 0.1rem solid black;
+    height: 16rem;
+    width: 12rem;
+    object-fit: cover;
+  }
+
+  &__left-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+   
+  }
+}
